@@ -19,14 +19,25 @@ router.get('/', function(req, res, next) {
 
 // GET list of posts
 router.get('/posts', function(req, res, next) {
+
   Posts.find({})
     .populate('author', 'name')
     .exec(function(err, posts) {
       if (err) {
         return next(err);
       }
-      res.json(posts);
+      let postObj = {};
+      let i = 0;
+
+      posts.forEach((post) => {
+        postObj[i] = post;
+        i++;
+      })
+
+      res.json(postObj);
     })
+
+
 })
 
 // GET specific post
@@ -43,6 +54,7 @@ router.get('/posts/:id', function(req, res, next) {
 
 // GET update/edit to specific post
 router.get('/posts/:id/update', function(req, res, next) {
+
   Posts.findById(req.params.id)
     .populate('author', 'name')
     .exec(function(err, post) {
