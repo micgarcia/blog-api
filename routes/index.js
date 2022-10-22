@@ -26,15 +26,8 @@ router.get('/posts', function(req, res, next) {
       if (err) {
         return next(err);
       }
-      let postObj = {};
-      let i = 0;
 
-      posts.forEach((post) => {
-        postObj[i] = post;
-        i++;
-      })
-
-      res.json(postObj);
+      res.json(posts);
     })
 
 
@@ -76,6 +69,7 @@ router.get('/posts/:id/comments', function(req, res, next) {
   Comments.find({
     post: req.params.id
   })
+    .populate('post')
     .exec(function(err, comments) {
       if (err) {
         return next(err);
