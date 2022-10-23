@@ -4,6 +4,7 @@ var router = express.Router();
 const Users = require('../models/users.js');
 const Posts = require('../models/posts.js');
 const Comments = require('../models/comments.js');
+const { body, validationResult} = require('express-validator')
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -45,24 +46,93 @@ router.get('/posts/:id', function(req, res, next) {
     })
 })
 
-// GET update/edit to specific post
-router.get('/posts/:id/update', function(req, res, next) {
 
-  Posts.findById(req.params.id)
-    .populate('author', 'name')
-    .exec(function(err, post) {
+
+// POST update/edit to specific post
+router.post('/posts/:id/update',
+  body("title", "Title must not be empty")
+    .trim()
+    .isLength({min:1})
+    .escape(),
+  body("name", "Name must not be empty")
+    .trim()
+    .isLength({min:1})
+    .escape(),
+  body("text", "Text must not be empty")
+    .trim()
+    .isLength({min:1})
+    .escape(),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.json(errors);
+      return;
+    }
+    const post = new Posts({
+      title: req.body.title,
+      author: req.body.name,
+      text: req.body.text,
+      _id: req.params.id
+    })
+
+
+    Posts.findByIdAndUpdate(req.params.id, post, {}, (err, thepost) => {
       if (err) {
         return next(err);
       }
-      res.json(post);
+      res.redirect('/');
     })
-})
+  }
+)
+
+// POST create post
+router.post('/posts/create',
+  body("title", "Title must not be empty")
+  .trim()
+  .isLength({min:1})
+  .escape(),
+  body("name", "Name must not be empty")
+  .trim()
+  .isLength({min:1})
+  .escape(),
+  body("text", "Text must not be empty")
+  .trim()
+  .isLength({min:1})
+  .escape(),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.json(errors);
+      return;
+    }
+    Users.findOne()
+      .exec(function (err, user) {
+        const post = new Posts({
+          title: req.body.title,
+          author: user,
+          text: req.body.text
+        }).save(err => {
+          if (err) {
+            return next(err);
+          }
+          res.redirect('/');
+        })
+      })
+
+  }
+)
 
 // POST update/edit to specific post
 // Need to verify that user has permissions (use passport username/password to authenticate, then JWT)
 
+
 // POST delete specific post
 // Need to verify that user has permissions
+router.post('/posts/:id/delete', function(req, res, next) {
+  res.send('deleted post');
+})
 
 // GET specific post's comments
 router.get('/posts/:id/comments', function(req, res, next) {
